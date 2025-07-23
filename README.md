@@ -38,11 +38,16 @@ A Model Context Protocol (MCP) server for interacting with Slack workspaces. Thi
    - Returns: Reaction confirmation
 
 5. **slack_get_channel_history**
-   - Get recent messages from a channel
+   - Get messages from a channel with optional time range and pagination support
    - Required inputs:
      - `channel_id` (string): The channel ID
    - Optional inputs:
      - `limit` (number, default: 10): Number of messages to retrieve
+     - `cursor` (string): Pagination cursor for next page of results
+     - `include_all_metadata` (boolean): Return all metadata associated with messages
+     - `inclusive` (boolean): Include messages at the exact timestamps specified by oldest and latest
+     - `latest` (string): End of time range of messages to include (timestamp, e.g., '1234567890.123456')
+     - `oldest` (string): Start of time range of messages to include (timestamp, e.g., '1234567890.123456')
    - Returns: List of messages with their content and metadata
 
 6. **slack_get_thread_replies**

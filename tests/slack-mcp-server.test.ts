@@ -264,6 +264,269 @@ describe('SlackClient', () => {
     );
   });
 
+  test('getChannelHistory with cursor parameter', async () => {
+    const mockResponse = {
+      ok: true,
+      messages: [],
+      response_metadata: { next_cursor: 'next_cursor_value' },
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    const result = await slackClient.getChannelHistory('C123456', 10, 'test_cursor');
+
+    expect(result).toEqual(mockResponse);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('cursor=test_cursor'),
+      expect.objectContaining({
+        headers: {
+          Authorization: 'Bearer xoxb-test-token',
+          'Content-Type': 'application/json',
+        },
+      })
+    );
+  });
+
+  test('getChannelHistory with include_all_metadata parameter', async () => {
+    const mockResponse = {
+      ok: true,
+      messages: [
+        {
+          type: 'message',
+          user: 'U123456',
+          text: 'Hello',
+          ts: '1234567890.123456',
+          metadata: { event_type: 'app_mention' },
+        },
+      ],
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    const result = await slackClient.getChannelHistory('C123456', 10, undefined, true);
+
+    expect(result).toEqual(mockResponse);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('include_all_metadata=true'),
+      expect.objectContaining({
+        headers: {
+          Authorization: 'Bearer xoxb-test-token',
+          'Content-Type': 'application/json',
+        },
+      })
+    );
+  });
+
+  test('getChannelHistory with inclusive parameter', async () => {
+    const mockResponse = {
+      ok: true,
+      messages: [
+        {
+          type: 'message',
+          user: 'U123456',
+          text: 'Hello',
+          ts: '1234567890.123456',
+        },
+      ],
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    const result = await slackClient.getChannelHistory('C123456', 10, undefined, undefined, false);
+
+    expect(result).toEqual(mockResponse);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('inclusive=false'),
+      expect.objectContaining({
+        headers: {
+          Authorization: 'Bearer xoxb-test-token',
+          'Content-Type': 'application/json',
+        },
+      })
+    );
+  });
+
+  test('getChannelHistory with latest parameter', async () => {
+    const mockResponse = {
+      ok: true,
+      messages: [
+        {
+          type: 'message',
+          user: 'U123456',
+          text: 'Hello',
+          ts: '1234567890.123456',
+        },
+      ],
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    const result = await slackClient.getChannelHistory('C123456', 10, undefined, undefined, undefined, '1640995200.000000');
+
+    expect(result).toEqual(mockResponse);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('latest=1640995200.000000'),
+      expect.objectContaining({
+        headers: {
+          Authorization: 'Bearer xoxb-test-token',
+          'Content-Type': 'application/json',
+        },
+      })
+    );
+  });
+
+  test('getChannelHistory with oldest parameter', async () => {
+    const mockResponse = {
+      ok: true,
+      messages: [
+        {
+          type: 'message',
+          user: 'U123456',
+          text: 'Hello',
+          ts: '1234567890.123456',
+        },
+      ],
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    const result = await slackClient.getChannelHistory('C123456', 10, undefined, undefined, undefined, undefined, '1640908800.000000');
+
+    expect(result).toEqual(mockResponse);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('oldest=1640908800.000000'),
+      expect.objectContaining({
+        headers: {
+          Authorization: 'Bearer xoxb-test-token',
+          'Content-Type': 'application/json',
+        },
+      })
+    );
+  });
+
+  test('getChannelHistory with time range (oldest and latest)', async () => {
+    const mockResponse = {
+      ok: true,
+      messages: [
+        {
+          type: 'message',
+          user: 'U123456',
+          text: 'Hello',
+          ts: '1234567890.123456',
+        },
+      ],
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    const result = await slackClient.getChannelHistory(
+      'C123456', 
+      50, 
+      undefined, 
+      undefined, 
+      true, 
+      '1640995200.000000', 
+      '1640908800.000000'
+    );
+
+    expect(result).toEqual(mockResponse);
+    const fetchCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+    const url = fetchCall[0];
+    
+    expect(url).toContain('oldest=1640908800.000000');
+    expect(url).toContain('latest=1640995200.000000');
+    expect(url).toContain('inclusive=true');
+    expect(url).toContain('limit=50');
+  });
+
+  test('getChannelHistory with all parameters', async () => {
+    const mockResponse = {
+      ok: true,
+      messages: [
+        {
+          type: 'message',
+          user: 'U123456',
+          text: 'Hello',
+          ts: '1234567890.123456',
+          metadata: { event_type: 'app_mention' },
+        },
+      ],
+      response_metadata: { next_cursor: 'next_cursor_value' },
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    const result = await slackClient.getChannelHistory(
+      'C123456', 
+      25, 
+      'test_cursor', 
+      true, 
+      false, 
+      '1640995200.000000', 
+      '1640908800.000000'
+    );
+
+    expect(result).toEqual(mockResponse);
+    const fetchCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+    const url = fetchCall[0];
+    
+    expect(url).toContain('channel=C123456');
+    expect(url).toContain('limit=25');
+    expect(url).toContain('cursor=test_cursor');
+    expect(url).toContain('include_all_metadata=true');
+    expect(url).toContain('inclusive=false');
+    expect(url).toContain('latest=1640995200.000000');
+    expect(url).toContain('oldest=1640908800.000000');
+  });
+
+  test('getChannelHistory with undefined optional parameters', async () => {
+    const mockResponse = {
+      ok: true,
+      messages: [],
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    const result = await slackClient.getChannelHistory(
+      'C123456', 
+      10, 
+      undefined, 
+      undefined, 
+      undefined, 
+      undefined, 
+      undefined
+    );
+
+    expect(result).toEqual(mockResponse);
+    const fetchCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+    const url = fetchCall[0];
+    
+    // Should only contain required parameters
+    expect(url).toContain('channel=C123456');
+    expect(url).toContain('limit=10');
+    expect(url).not.toContain('cursor=');
+    expect(url).not.toContain('include_all_metadata=');
+    expect(url).not.toContain('inclusive=');
+    expect(url).not.toContain('latest=');
+    expect(url).not.toContain('oldest=');
+  });
+
   test('getThreadReplies successful response', async () => {
     const mockResponse = {
       ok: true,
