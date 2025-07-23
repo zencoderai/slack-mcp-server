@@ -34,6 +34,11 @@ interface AddReactionArgs {
 interface GetChannelHistoryArgs {
   channel_id: string;
   limit?: number;
+  cursor?: string;
+  include_all_metadata?: boolean;
+  inclusive?: boolean;
+  latest?: string;
+  oldest?: string;
 }
 
 interface GetThreadRepliesArgs {
@@ -160,11 +165,36 @@ export class SlackClient {
   async getChannelHistory(
     channel_id: string,
     limit: number = 10,
+    cursor?: string,
+    include_all_metadata?: boolean,
+    inclusive?: boolean,
+    latest?: string,
+    oldest?: string,
   ): Promise<any> {
     const params = new URLSearchParams({
       channel: channel_id,
       limit: limit.toString(),
     });
+
+    if (cursor) {
+      params.append("cursor", cursor);
+    }
+
+    if (include_all_metadata !== undefined) {
+      params.append("include_all_metadata", include_all_metadata.toString());
+    }
+
+    if (inclusive !== undefined) {
+      params.append("inclusive", inclusive.toString());
+    }
+
+    if (latest) {
+      params.append("latest", latest);
+    }
+
+    if (oldest) {
+      params.append("oldest", oldest);
+    }
 
     const response = await fetch(
       `https://slack.com/api/conversations.history?${params}`,
@@ -305,14 +335,19 @@ export function createSlackServer(slackClient: SlackClient): McpServer {
     "slack_get_channel_history",
     {
       title: "Get Slack Channel History",
-      description: "Get recent messages from a channel",
+      description: "Get messages from a channel with optional time range and pagination support",
       inputSchema: {
         channel_id: z.string().describe("The ID of the channel"),
         limit: z.number().optional().default(10).describe("Number of messages to retrieve (default 10)"),
+        cursor: z.string().optional().describe("Pagination cursor for next page of results"),
+        include_all_metadata: z.boolean().optional().describe("Return all metadata associated with messages"),
+        inclusive: z.boolean().optional().describe("Include messages at the exact timestamps specified by oldest and latest"),
+        latest: z.string().optional().describe("End of time range of messages to include (timestamp, e.g., '1234567890.123456')"),
+        oldest: z.string().optional().describe("Start of time range of messages to include (timestamp, e.g., '1234567890.123456')"),
       },
     },
-    async ({ channel_id, limit }) => {
-      const response = await slackClient.getChannelHistory(channel_id, limit);
+    async ({ channel_id, limit, cursor, include_all_metadata, inclusive, latest, oldest }) => {
+      const response = await slackClient.getChannelHistory(channel_id, limit, cursor, include_all_metadata, inclusive, latest, oldest);
       return {
         content: [{ type: "text", text: JSON.stringify(response) }],
       };
