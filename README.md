@@ -2,6 +2,10 @@
 ## Disclaimer
 This project includes [code](https://github.com/modelcontextprotocol/servers-archived/tree/main/src/slack) originally developed by Anthropic and released under the MIT License. Substantial modifications and new functionality have been added by For Good AI Inc. (dba Zencoder Inc.), and are licensed under the Apache License, Version 2.0.
 
+<a href="https://glama.ai/mcp/servers/@zencoderai/slack-mcp-server">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@zencoderai/slack-mcp-server/badge" alt="Slack MCP server" />
+</a>
+
 ## Overview
 A Model Context Protocol (MCP) server for interacting with Slack workspaces. This server provides tools to list channels, post messages, reply to threads, add reactions, get channel history, and manage users.
 
