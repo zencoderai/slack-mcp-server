@@ -60,6 +60,21 @@ export class SlackClient {
     };
   }
 
+  /**
+   * Format thread_ts to ensure it has the decimal point in the correct position
+   * Slack expects format like "1234567890.123456" (timestamp with period before last 6 digits)
+   */
+  private formatThreadTs(thread_ts: string): string {
+    if (!thread_ts.includes('.')) {
+      // If no period, add it so that 6 digits come after it
+      if (thread_ts.length >= 7) {
+        const insertPosition = thread_ts.length - 6;
+        return thread_ts.slice(0, insertPosition) + '.' + thread_ts.slice(insertPosition);
+      }
+    }
+    return thread_ts;
+  }
+
   async getChannels(limit: number = 100, cursor?: string): Promise<any> {
     const predefinedChannelIds = process.env.SLACK_CHANNEL_IDS;
     if (!predefinedChannelIds) {
@@ -131,7 +146,7 @@ export class SlackClient {
       headers: this.botHeaders,
       body: JSON.stringify({
         channel: channel_id,
-        thread_ts: thread_ts,
+        thread_ts: this.formatThreadTs(thread_ts),
         text: text,
       }),
     });
@@ -177,7 +192,7 @@ export class SlackClient {
   async getThreadReplies(channel_id: string, thread_ts: string): Promise<any> {
     const params = new URLSearchParams({
       channel: channel_id,
-      ts: thread_ts,
+      ts: this.formatThreadTs(thread_ts),
     });
 
     const response = await fetch(
