@@ -302,6 +302,43 @@ describe('SlackClient', () => {
     );
   });
 
+  test('getThreadReplies with oldest only', async () => {
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve({ ok: true, messages: [] }),
+    });
+
+    await slackClient.getThreadReplies('C123456', '1234567890.123456', '1234567891.000000');
+
+    const calledUrl: string = (mockFetch as any).mock.calls[0][0];
+    expect(calledUrl).toContain('oldest=1234567891.000000');
+    expect(calledUrl).not.toContain('limit=');
+    expect(calledUrl).not.toContain('cursor=');
+  });
+
+  test('getThreadReplies with limit and cursor for paginated continuation', async () => {
+    const mockResponse = {
+      ok: true,
+      messages: [
+        { type: 'message', user: 'U789012', text: 'Reply', ts: '1234567892.000000' },
+      ],
+      response_metadata: { next_cursor: 'page2' },
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve(mockResponse),
+    });
+
+    const result = await slackClient.getThreadReplies(
+      'C123456', '1234567890.123456', undefined, 25, 'abc123'
+    );
+
+    const calledUrl: string = (mockFetch as any).mock.calls[0][0];
+    expect(calledUrl).toContain('limit=25');
+    expect(calledUrl).toContain('cursor=abc123');
+    expect(calledUrl).not.toContain('oldest=');
+    expect(result.response_metadata.next_cursor).toBe('page2');
+  });
+
   test('getUsers successful response', async () => {
     const mockResponse = {
       ok: true,
