@@ -174,11 +174,20 @@ export class SlackClient {
     return response.json();
   }
 
-  async getThreadReplies(channel_id: string, thread_ts: string): Promise<any> {
+  async getThreadReplies(
+    channel_id: string,
+    thread_ts: string,
+    oldest?: string,
+    limit?: number,
+    cursor?: string,
+  ): Promise<any> {
     const params = new URLSearchParams({
       channel: channel_id,
       ts: thread_ts,
     });
+    if (oldest) params.set("oldest", oldest);
+    if (limit)  params.set("limit", String(limit));
+    if (cursor) params.set("cursor", cursor);
 
     const response = await fetch(
       `https://slack.com/api/conversations.replies?${params}`,
@@ -327,10 +336,19 @@ export function createSlackServer(slackClient: SlackClient): McpServer {
       inputSchema: {
         channel_id: z.string().describe("The ID of the channel containing the thread"),
         thread_ts: z.string().describe("The timestamp of the parent message in the format '1234567890.123456'. Timestamps in the format without the period can be converted by adding the period such that 6 numbers come after it."),
+        oldest: z.string().optional().describe("Only return replies after this Unix timestamp. Use to fetch only new replies since a previous call."),
+        limit: z.number().optional().describe("Maximum number of replies to return per call"),
+        cursor: z.string().optional().describe("Pagination cursor from a previous response's next_cursor"),
       },
     },
-    async ({ channel_id, thread_ts }) => {
-      const response = await slackClient.getThreadReplies(channel_id, thread_ts);
+    async ({ channel_id, thread_ts, oldest, limit, cursor }) => {
+      const response = await slackClient.getThreadReplies(
+        channel_id,
+        thread_ts,
+        oldest,
+        limit,
+        cursor,
+      );
       return {
         content: [{ type: "text", text: JSON.stringify(response) }],
       };
